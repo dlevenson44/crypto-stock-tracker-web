@@ -1,0 +1,1 @@
+{"root":["./src/app.tsx","./src/main.tsx","./src/components/pricechart.tsx","./src/components/rangetabs.tsx","./src/components/searchbar.tsx","./src/components/statsrow.tsx","./src/components/volumechart.tsx","./src/lib/api.ts","./src/lib/charttheme.ts","./src/lib/charts.ts","./src/lib/format.ts","./src/lib/types.ts","./vite.config.ts"],"version":"6.0.3"}
