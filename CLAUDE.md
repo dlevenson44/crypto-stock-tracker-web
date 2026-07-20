@@ -26,11 +26,15 @@ top-level state (selected ticker, range, fetched series, loading/error).
   the `/td` path prefix. `fetchChart` keeps an in-memory cache keyed by
   `symbol:range` with a 60s TTL. Newest-first responses are reversed and mapped to
   `PricePoint[]`.
-- **API proxy & key**: requests go to `/td/*`, which `vite.config.ts` proxies to
-  `https://api.twelvedata.com` and authenticates by injecting the
-  `TWELVE_DATA_API_KEY` env var as an `Authorization: apikey …` header. The key is
-  intentionally **not** `VITE_`-prefixed so it stays server-side and never reaches
-  the browser. Put it in a gitignored `.env` at the repo root.
+- **API proxy & key**: requests go to `/td/*`. In dev, `vite.config.ts` proxies
+  them to `https://api.twelvedata.com`; in production the Vercel Edge function
+  `api/td/[...path].ts` (routed via `vercel.json`) does the same. Both authenticate
+  by injecting the `TWELVE_DATA_API_KEY` env var as an `Authorization: apikey …`
+  header. The key is intentionally **not** `VITE_`-prefixed so it stays server-side
+  and never reaches the browser. Locally, put it in a gitignored `.env` at the repo
+  root; on Vercel, set it in the project's environment variables. Note `vite
+  preview` does not run the dev proxy, so `/td` requests only work under `pnpm dev`
+  or a real Vercel deploy.
 - **Charts**: Chart.js is tree-shaken — the needed controllers/elements are
   registered once in `src/lib/charts.ts` (imported for side effects from
   `src/main.tsx`). `PriceChart` (line) and `VolumeChart` (bar) wrap

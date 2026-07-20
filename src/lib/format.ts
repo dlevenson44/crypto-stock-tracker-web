@@ -3,12 +3,22 @@ import { type RangeKey } from './types'
 export function formatPrice(value: number, currency: string): string {
   const abs = Math.abs(value)
   const digits = abs >= 1 ? 2 : abs >= 0.01 ? 4 : 6
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency,
-    minimumFractionDigits: 2,
-    maximumFractionDigits: digits,
-  }).format(value)
+  try {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency,
+      minimumFractionDigits: 2,
+      maximumFractionDigits: digits,
+    }).format(value)
+  } catch {
+    // Non-ISO-4217 quote currency (e.g. a crypto cross like BTC/ETH): Intl
+    // rejects the code, so format the number plainly and append the symbol.
+    const num = new Intl.NumberFormat('en-US', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: digits,
+    }).format(value)
+    return `${num} ${currency}`
+  }
 }
 
 export function formatCompact(value: number): string {

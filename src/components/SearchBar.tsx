@@ -13,8 +13,15 @@ export function SearchBar({ onSelect }: SearchBarProps) {
   const [open, setOpen] = useState(false)
   const [active, setActive] = useState(-1)
   const rootRef = useRef<HTMLDivElement>(null)
+  // Picking a result writes the symbol back into the input; skip the search
+  // that query change would otherwise trigger so the dropdown stays closed.
+  const skipNextSearch = useRef(false)
 
   useEffect(() => {
+    if (skipNextSearch.current) {
+      skipNextSearch.current = false
+      return
+    }
     const trimmed = query.trim()
     if (trimmed.length < 2) {
       setResults([])
@@ -52,7 +59,9 @@ export function SearchBar({ onSelect }: SearchBarProps) {
   }, [])
 
   const select = (result: SearchResult) => {
+    skipNextSearch.current = true
     setQuery(result.symbol)
+    setResults([])
     setOpen(false)
     onSelect(result)
   }

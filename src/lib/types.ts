@@ -31,6 +31,7 @@ export interface PricePoint {
 
 export interface ChartSeries {
   symbol: string
+  range: RangeKey
   currency: string
   points: PricePoint[]
 }

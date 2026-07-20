@@ -49,7 +49,11 @@ function App() {
     return () => controller.abort()
   }, [selected, range, attempt])
 
-  const showSeries = selected && series && series.symbol === selected.symbol
+  const showSeries =
+    selected &&
+    series &&
+    series.symbol === selected.symbol &&
+    series.range === range
 
   return (
     <div className="app">

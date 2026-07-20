@@ -11,6 +11,9 @@ export default defineConfig(({ mode }) => {
   return {
     server: {
       port: 3000,
+      // Dev-only proxy. In production this same /td path is handled by the
+      // Vercel Edge function in api/td/ (see vercel.json), which injects the
+      // key the same way. `vite preview` does NOT run this proxy.
       proxy: {
         '/td': {
           target: 'https://api.twelvedata.com',

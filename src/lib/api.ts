@@ -145,6 +145,31 @@ function parseDatetime(value: string): number {
 
 const chartCache = new Map<string, { at: number; data: ChartSeries }>()
 const CHART_CACHE_TTL = 60_000
+// Cap the cache so a long browsing session can't grow it without bound. The
+// Map keeps insertion order, so the first key is the least-recently-used.
+const CHART_CACHE_MAX = 50
+
+function cacheGet(key: string): ChartSeries | null {
+  const hit = chartCache.get(key)
+  if (!hit) return null
+  if (Date.now() - hit.at >= CHART_CACHE_TTL) {
+    chartCache.delete(key)
+    return null
+  }
+  // Re-insert to mark as most-recently-used.
+  chartCache.delete(key)
+  chartCache.set(key, hit)
+  return hit.data
+}
+
+function cacheSet(key: string, data: ChartSeries): void {
+  chartCache.set(key, { at: Date.now(), data })
+  while (chartCache.size > CHART_CACHE_MAX) {
+    const oldest = chartCache.keys().next().value
+    if (oldest === undefined) break
+    chartCache.delete(oldest)
+  }
+}
 
 export async function fetchChart(
   symbol: string,
@@ -152,10 +177,12 @@ export async function fetchChart(
   type: AssetType,
   signal?: AbortSignal,
 ): Promise<ChartSeries> {
-  const cacheKey = `${symbol}:${range}`
-  const cached = chartCache.get(cacheKey)
-  if (cached && Date.now() - cached.at < CHART_CACHE_TTL) {
-    return cached.data
+  // Include type: the same symbol+range can request a different bar count by
+  // asset type (see rangeParams' 24h branch).
+  const cacheKey = `${symbol}:${range}:${type}`
+  const cached = cacheGet(cacheKey)
+  if (cached) {
+    return cached
   }
   const params = rangeParams(range, type)
   params.set('symbol', symbol)
@@ -180,11 +207,12 @@ export async function fetchChart(
   }
   const series: ChartSeries = {
     symbol,
+    range,
     // Crypto pairs have no meta.currency; the quote currency is the part
     // of the symbol after the slash (e.g. BTC/USD).
     currency: body.meta?.currency ?? symbol.split('/')[1] ?? 'USD',
     points,
   }
-  chartCache.set(cacheKey, { at: Date.now(), data: series })
+  cacheSet(cacheKey, series)
   return series
 }
