@@ -1,13 +1,7 @@
 import { type KeyboardEvent, useEffect, useRef, useState } from 'react'
 
 import { searchSymbols } from '~/lib/api'
-import { type SearchResult } from '~/lib/types'
-
-const TYPE_LABELS: Record<SearchResult['type'], string> = {
-  stock: 'Stock',
-  etf: 'ETF',
-  crypto: 'Crypto',
-}
+import { TYPE_LABELS, type SearchResult } from '~/lib/types'
 
 interface SearchBarProps {
   onSelect: (result: SearchResult) => void
@@ -95,7 +89,7 @@ export function SearchBar({ onSelect }: SearchBarProps) {
           active >= 0 ? `search-option-${active}` : undefined
         }
         aria-label="Search stock or crypto tickers"
-        placeholder="Search a stock or crypto ticker (AAPL, BTC-USD, …)"
+        placeholder="Search a stock or crypto ticker (AAPL, BTC/USD, …)"
         value={query}
         onChange={(event) => setQuery(event.target.value)}
         onKeyDown={onKeyDown}

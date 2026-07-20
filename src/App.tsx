@@ -6,15 +6,14 @@ import { SearchBar } from '~/components/SearchBar'
 import { StatsRow } from '~/components/StatsRow'
 import { VolumeChart } from '~/components/VolumeChart'
 import { fetchChart } from '~/lib/api'
-import { type ChartSeries, type RangeKey, type SearchResult } from '~/lib/types'
+import {
+  TYPE_LABELS,
+  type ChartSeries,
+  type RangeKey,
+  type SearchResult,
+} from '~/lib/types'
 
 import './App.css'
-
-const TYPE_LABELS: Record<SearchResult['type'], string> = {
-  stock: 'Stock',
-  etf: 'ETF',
-  crypto: 'Crypto',
-}
 
 const QUICK_PICKS: SearchResult[] = [
   { symbol: 'AAPL', name: 'Apple Inc.', type: 'stock', exchange: 'NASDAQ' },
@@ -115,7 +114,7 @@ function App() {
 
           {showSeries && (
             <>
-              <StatsRow series={series} range={range} />
+              <StatsRow series={series} />
               <div className="card">
                 <h3>Price</h3>
                 <PriceChart series={series} range={range} />

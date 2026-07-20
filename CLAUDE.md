@@ -9,21 +9,46 @@ Uses **pnpm** (pnpm-lock.yaml is checked in).
 - `pnpm dev` — start dev server (Vite, port 3000)
 - `pnpm build` — typecheck (`tsc -b`) then build with Vite
 - `pnpm lint` — run ESLint (flat config, `eslint.config.js`)
+- `pnpm lint:fix` — ESLint with `--fix`
 - `pnpm preview` — preview production build
 
 No test framework is set up yet.
 
 ## Architecture
 
-Guild website for Four Loktar (Horde, Dreamscythe): Vite + React 19 + TypeScript SPA with React Router and TanStack Query, backed by Supabase (Postgres + RLS, Discord OAuth, Edge Functions). App entry HTML is `index.html` at the repo root.
+Single-ticker crypto & stock tracker: Vite + React 19 + TypeScript SPA that
+charts price and volume history from the [Twelve Data](https://twelvedata.com)
+API. App entry HTML is `index.html` at the repo root; `src/App.tsx` holds all
+top-level state (selected ticker, range, fetched series, loading/error).
 
-- **Dual-mode data layer**: `src/lib/api.ts` is the only data access point. With `VITE_SUPABASE_*` env vars set it queries Supabase; without them it serves an in-memory copy of `src/lib/mock/data.ts` (the app must always work in mock mode).
-- **Auth**: `src/lib/auth.tsx` — real Discord OAuth via Supabase, or simulated member/officer login in mock mode. Officer role comes from the `profiles` table and gates `/admin` plus sync buttons.
-- **Pages** in `src/pages/`, shared layout in `src/components/Layout.tsx`, domain types in `src/lib/types.ts`, WoW constants (classes, roles, custom guild ranks — exact casing matters) in `src/lib/wow.ts`.
-- **Backend**: SQL migrations in `supabase/migrations/` (schema + RLS policies); Deno edge functions in `supabase/functions/` (`wcl-parses`, `raidhelper-sync`) — excluded from ESLint and tsc; setup/deploy steps in `SETUP.md`.
+- **Data layer**: `src/lib/api.ts` is the only data access point — `searchSymbols`
+  (ticker autocomplete) and `fetchChart` (time series). Both call the API through
+  the `/td` path prefix. `fetchChart` keeps an in-memory cache keyed by
+  `symbol:range` with a 60s TTL. Newest-first responses are reversed and mapped to
+  `PricePoint[]`.
+- **API proxy & key**: requests go to `/td/*`, which `vite.config.ts` proxies to
+  `https://api.twelvedata.com` and authenticates by injecting the
+  `TWELVE_DATA_API_KEY` env var as an `Authorization: apikey …` header. The key is
+  intentionally **not** `VITE_`-prefixed so it stays server-side and never reaches
+  the browser. Put it in a gitignored `.env` at the repo root.
+- **Charts**: Chart.js is tree-shaken — the needed controllers/elements are
+  registered once in `src/lib/charts.ts` (imported for side effects from
+  `src/main.tsx`). `PriceChart` (line) and `VolumeChart` (bar) wrap
+  `react-chartjs-2`; the volume card only renders when the series has non-zero
+  volume. `src/lib/chartTheme.ts` (`useChartTheme`) supplies light/dark colors that
+  track `prefers-color-scheme`.
+- **Formatting**: `src/lib/format.ts` centralizes `Intl`-based price/percent/compact
+  and per-range axis/tooltip date formatting.
+- **Types**: `src/lib/types.ts` — `AssetType`, `RangeKey`, the `RANGE_OPTIONS` list,
+  `SearchResult`, `PricePoint`, `ChartSeries`.
+- **Components** (`src/components/`): `SearchBar` (debounced, abortable combobox with
+  keyboard nav), `RangeTabs`, `StatsRow`, `PriceChart`, `VolumeChart`.
 
-- Path alias: `~/*` maps to `./src/*` (tsconfig).
-- TypeScript is strict with `noUnusedLocals`/`noUnusedParameters` and `verbatimModuleSyntax` — type-only imports must use `import type` / inline `type` specifiers (also enforced by the `@typescript-eslint/consistent-type-imports` lint rule).
+- Path alias: `~/*` maps to `./src/*` (tsconfig + `vite.config.ts` resolve.alias).
+- TypeScript is strict with `noUnusedLocals`/`noUnusedParameters` and
+  `verbatimModuleSyntax` — type-only imports must use `import type` / inline `type`
+  specifiers (also enforced by the `@typescript-eslint/consistent-type-imports` lint
+  rule).
 - `tsc` does not emit; Vite handles bundling.
 
 ## Code style

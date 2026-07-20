@@ -1,5 +1,11 @@
 export type AssetType = 'stock' | 'etf' | 'crypto'
 
+export const TYPE_LABELS: Record<AssetType, string> = {
+  stock: 'Stock',
+  etf: 'ETF',
+  crypto: 'Crypto',
+}
+
 export interface SearchResult {
   symbol: string
   name: string
@@ -26,6 +32,5 @@ export interface PricePoint {
 export interface ChartSeries {
   symbol: string
   currency: string
-  previousClose: number | null
   points: PricePoint[]
 }

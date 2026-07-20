@@ -183,7 +183,6 @@ export async function fetchChart(
     // Crypto pairs have no meta.currency; the quote currency is the part
     // of the symbol after the slash (e.g. BTC/USD).
     currency: body.meta?.currency ?? symbol.split('/')[1] ?? 'USD',
-    previousClose: null,
     points,
   }
   chartCache.set(cacheKey, { at: Date.now(), data: series })

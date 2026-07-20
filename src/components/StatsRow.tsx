@@ -1,21 +1,16 @@
 import { formatCompact, formatPercent, formatPrice } from '~/lib/format'
-import { type ChartSeries, type RangeKey } from '~/lib/types'
+import { type ChartSeries } from '~/lib/types'
 
 interface StatsRowProps {
   series: ChartSeries
-  range: RangeKey
 }
 
-export function StatsRow({ series, range }: StatsRowProps) {
+export function StatsRow({ series }: StatsRowProps) {
   const { points, currency } = series
   const last = points[points.length - 1]
   const first = points[0]
-  // Intraday change is measured against the previous close when Yahoo
-  // provides one; longer ranges compare against the window's first point.
-  const baseline =
-    range === '24h' && series.previousClose != null
-      ? series.previousClose
-      : first.close
+  // Change is measured against the first point in the selected range.
+  const baseline = first.close
   const change = last.close - baseline
   const fraction = baseline === 0 ? 0 : change / baseline
   const up = change >= 0
